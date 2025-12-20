@@ -586,17 +586,23 @@
     // ============================
     // API CALL (optional)
     // ============================
-    async function askApi(question){
-      // Expected response contoh:
-      // { "answer": "[Keterlambatan] ...", "confidence": 0.42 }
-      const res = await fetch(API_URL, {
-        method: "POST",
-        headers: { "Content-Type":"application/json" },
-        body: JSON.stringify({ message: question })
-      });
-      if (!res.ok) throw new Error("API error");
-      return await res.json();
-    }
+async function askApi(question){
+  const res = await fetch(API_URL, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "ngrok-skip-browser-warning": "true"
+    },
+    body: JSON.stringify({ message: question })
+  });
+
+  if (!res.ok) {
+    const txt = await res.text().catch(()=> "");
+    throw new Error("API error: " + res.status + " " + txt.slice(0,200));
+  }
+  return await res.json();
+}
+
 
     async function onSend(){
       const q = input.value.trim();
@@ -633,15 +639,15 @@
           confidence: confidence,
           showActions: true
         });
-      } catch(e){
-        removeTyping();
-        addMessage({
-          role:"bot",
-          text:"Maaf, sistem sedang bermasalah. Coba lagi ya.",
-          label:"Error",
-          showActions:false
-        });
-      } finally {
+} catch(e){
+  removeTyping();
+  addMessage({
+    role:"bot",
+    text: "Error: " + (e?.message || e),
+    label:"Error",
+    showActions:false
+  });
+} finally {
         sendBtn.disabled = false;
       }
     }
